@@ -1,0 +1,47 @@
+pipeline {
+    agent any
+
+    environment {
+        QUAY_IMAGE = "quay.io/myorg/myapp"
+        IMAGE_TAG = "v1.0.${BUILD_NUMBER}"
+        QUAY_CREDENTIAL_ID = 'quay-io-creds'       // Jenkins Credential ID (username/password)
+    }
+
+    tools {
+        nodejs 'NodeJS-20' // Make sure this tool is configured in Jenkins Global Tools
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm ci'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'npm test'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh "docker build -t ${QUAY_IMAGE}:${IMAGE_TAG} ."
+            }
+        }
+    post {
+        always {
+            echo "Pipeline finished"
+                }
+        failure {
+            echo "Something went wrong!"
+            }   
+         }
+    }
+}
